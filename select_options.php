@@ -62,8 +62,6 @@ if ($mform->is_cancelled()) {
 	$report->set_columns($data->columns);
 	$report->set_tables($_SESSION['report_tbls']);
 	$report->set_order_by($data->order_by);
-	unset($_SESSION['report_tbls']);
-	unset($_SESSION['report_type']);
 } else {
 	// this branch is executed if the form is submitted but
 	// the data doesn't validate and the form should be
@@ -91,6 +89,7 @@ echo $OUTPUT->header();
                 if( isset($report) ){
                 	$report->render();
                 }else{
+                	echo "<p>Hold control to select multiple items</p>";
                 	$mform->display();
                 }
                  ?>

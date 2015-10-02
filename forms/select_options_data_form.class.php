@@ -17,12 +17,14 @@ class select_options_data_form extends moodleform {
 		foreach ( $tables as $table ){
 			$tab_cols_records = $DB->get_recordset_sql('describe {'.$table.'}');
 			foreach( $tab_cols_records as $record ){
-				$tab_cols[$table.'.'.$record->field] = $table.'.'.$record->field;
-			}	
-		}
+				if( !in_array($record->field, report::$remove_columns[$table] ) ){ 
+					$tab_cols[$table.'.'.$record->field] = $table.'.'.$record->field;
+				}
+			}
+		}	
 
 		$select_col = $mform->addElement('select', 'columns', get_string('select_col',
-			'block_dial_reports'), $tab_cols);
+			'block_dial_reports'), $tab_cols, array('size'=>count($tab_cols)/2));
 		$select_col->setMultiple(true);
 
 		

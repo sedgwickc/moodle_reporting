@@ -18,7 +18,7 @@ class select_data_form extends moodleform {
 
 		$mform = &$this->_form; 
 		$table_select = $mform->addElement('select', 'tables', get_string('table_select',
-			'block_dial_rewards'), $tables);
+			'block_dial_rewards'), $tables, array('size'=>count($tables)));
 		$table_select->setMultiple(true);
 		$table_select->setSelected('users');
 

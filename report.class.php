@@ -24,7 +24,28 @@ class report {
 	private $categories;
 	private $dept_sums;
 	
-	static public $report_types = array( 'pivot'=>'Pivot', 'data'=>'Data' );
+	public static $report_types = array( 'pivot'=>'Pivot', 
+		'data'=>'Data' );
+	public static $remove_columns = array( 
+		'user' => array('calendartype',
+			'secret',
+			'trustbitmask',
+			'password', 
+			'mnethostid', 
+			'theme'),
+		'course' => array('id', 
+			'idnumber', 
+			'sortorder',
+			'groupmodeforce',
+			'cacherev',
+			'defaultgroupingid',
+			'theme',
+			'maxbytes', 
+			'marker', 
+			'legacyfiles'),
+		'course_completions' => array('id', 
+			'reaggregate')
+		);
 
 	function __CONSTRUCT(){
 		global $DB;
@@ -42,6 +63,7 @@ class report {
 		global $DB;
 
 		if( empty($this->columns) ){
+			echo "->get_data(): Columns no set!";
 			return null;
 		}
 
@@ -79,9 +101,6 @@ class report {
 			}
 
 			$this->record_set = $DB->get_recordset_sql($this->query);
-			if( !$this->record_set->valid() ){
-				return false;
-			}
 		}
 	}
 
@@ -166,12 +185,8 @@ class report {
 			return;
 		}
 
-		if( !$this->record_set->valid() ){
-			echo "render(): record set not valid. Retrieving new records ";
-			if( $this->get_data() == false ){
-				echo 'No Data!';
-				return null;
-			}
+		if( !isset($this->record_set) ){
+			$this->get_data();
 		}
 
 		simpleHtmlTable($this->record_set, $this->columns);
