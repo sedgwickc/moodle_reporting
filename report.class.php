@@ -99,7 +99,6 @@ class report {
 			if( isset($this->order_by) ){
 				$this->query .= ' order by '.$this->order_by.' desc';
 			}
-
 			$this->record_set = $DB->get_recordset_sql($this->query);
 		}
 	}
@@ -189,7 +188,13 @@ class report {
 			$this->get_data();
 		}
 
-		simpleHtmlTable($this->record_set, $this->columns);
+		$this->rows = simpleHtmlTable($this->record_set, $this->columns);
+	}
+
+	public function csv_link(){
+		$_SESSION['report_columns'] = $this->columns;
+		$_SESSION['report_rows'] = $this->rows;
+		echo "<a href= 'report2csv.php'>Download report as CSV file</a>";
 	}
 
 	public function set_title( $new_title ){

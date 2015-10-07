@@ -277,7 +277,7 @@ function simpleHtmlTable($data,$headers)
 	if( !$data->valid() || empty($headers) ){
 		return null;
 	}
-	// do you like spaghetti?
+	$rows = array();
 	echo "<table border='1'>";
 	echo "<thead>";
 	foreach ($headers as $item) {
@@ -286,11 +286,16 @@ function simpleHtmlTable($data,$headers)
 	echo "</thead>";
 	foreach	($data as $key_r => $record) {
 		echo "<tr>";
+		$row = array();
 		foreach ($record as $key => $field) {
 			echo "<td>{$field}</td>";
+			$row[] = $field;
 		}
+		$rows[] = $row;
 		echo "</tr>";
 	}
 	echo "</table>";
+
+	return $rows;
 }
 

@@ -38,26 +38,22 @@ if( empty($type) ){
 
 switch($type){
 	case 'data':
-		$title = 'Select Options for Data Table';
 		$mform = new select_options_data_form();
 		break;
 	case 'pivot':
-		$title = 'Select Options for Pivot Table';
 		$mform = new select_options_pivot_form();
 		break;
 	default:
 		echo 'Type is Invalid!';
 		redirect( new moodle_url('my') );
 		break;
-	}
-
-$PAGE->set_heading($title);
-$PAGE->set_title($title);
+}
 
 if ($mform->is_cancelled()) {
 	// Redircet user to dashbosrd page
 	redirect(new moodle_url('/blocks/dial_reports/reports/home.php'));
 } elseif ($data = $mform->get_data()) {
+	$title = 'Genereted '.$type.' Report';
 	$report = new report();
 	$report->set_columns($data->columns);
 	$report->set_tables($_SESSION['report_tbls']);
@@ -66,7 +62,11 @@ if ($mform->is_cancelled()) {
 	// this branch is executed if the form is submitted but
 	// the data doesn't validate and the form should be
 	// redisplayed or on the first display of the form.
+	$title = 'Select Options '.$type.' for Data Table';
 }
+$PAGE->set_heading($title);
+$PAGE->set_title($title);
+
 
 echo $OUTPUT->header();
 ?>
@@ -88,6 +88,8 @@ echo $OUTPUT->header();
                 <?php
                 if( isset($report) ){
                 	$report->render();
+                	$report->csv_link();
+                	// call render method tthat creates link that opens report2csv.php
                 }else{
                 	echo "<p>Hold control to select multiple items</p>";
                 	$mform->display();
