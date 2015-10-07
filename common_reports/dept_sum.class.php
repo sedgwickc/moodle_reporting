@@ -15,7 +15,7 @@ class dept_sum {
 		$this->cat_sums = array();
 		$this->categories = $new_categories;
 		foreach( $this->categories as $id=>$name ){
-			$this->cat_sums[$id] = 0;
+			$this->cat_sums[$id] = 0.0;
 		}
 	}
 
@@ -27,8 +27,8 @@ class dept_sum {
 		return $sum;
 	}
 
-	public function increment_category( $id ){
-		$this->cat_sums[$id] += 1;
+	public function increment_category( $id, $minutes ){
+		$this->cat_sums[$id] += $minutes;
 	}
 
 	public function get_dept(){
@@ -51,10 +51,6 @@ class dept_sum {
 		$this->dept = $new_dept;
 	}
 	
-	public function set_hours_soft($num){
-		 $this->hours_soft = $num;
-	}
-
 	public function set_remarks($new_remarks){
 		$this->remarks = $new_remarks;
 	}

@@ -37,12 +37,8 @@ if ($mform->is_cancelled()) {
 	redirect(new moodle_url('/blocks/dial_reports/home.php'));
 } elseif ($data = $mform->get_data()) {
 	//In this case you process validated data.
-	$tables = array();
-	foreach( $data->tables as $table ){
-		$tables[] = $table;
-	}
-	$_SESSION['report_tbls'] = $tables;
-	//foreach checkbox selected, add to an array to be passed to columns page
+	$_SESSION['report_base'] = $data->base_table;
+	
 
 	redirect( new
 		moodle_url('/blocks/dial_reports/select_options.php') );

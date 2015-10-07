@@ -23,7 +23,6 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 $PAGE->set_url(new
 	moodle_url('/blocks/dial_reports/select_options.php'));
-
 if( isset( $_SESSION['report_type'] ) ){
 	$type = $_SESSION['report_type'];
 } else {
@@ -53,11 +52,13 @@ if ($mform->is_cancelled()) {
 	// Redircet user to dashbosrd page
 	redirect(new moodle_url('/blocks/dial_reports/reports/home.php'));
 } elseif ($data = $mform->get_data()) {
+	print_r($data);
 	$title = 'Genereted '.$type.' Report';
 	$report = new report();
-	$report->set_columns($data->columns);
-	$report->set_tables($_SESSION['report_tbls']);
-	$report->set_order_by($data->order_by);
+	$report->set_columns( $data->columns );
+	$report->set_base( $_SESSION['report_base'] );
+	$report->set_joins( $data->joins );
+	$report->set_order_by( $data->order_by );
 } else {
 	// this branch is executed if the form is submitted but
 	// the data doesn't validate and the form should be
@@ -89,7 +90,6 @@ echo $OUTPUT->header();
                 if( isset($report) ){
                 	$report->render();
                 	$report->csv_link();
-                	// call render method tthat creates link that opens report2csv.php
                 }else{
                 	echo "<p>Hold control to select multiple items</p>";
                 	$mform->display();

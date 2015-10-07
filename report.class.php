@@ -17,6 +17,8 @@ class report {
 	private $values;
 	private $calcs;
 	private $order_by;
+	private $joins;
+	private $where_clause;
 	private $record_set;
 	private $tables;
 	private $fields;
@@ -24,17 +26,18 @@ class report {
 	private $categories;
 	private $dept_sums;
 	
-	public static $report_types = array( 'pivot'=>'Pivot', 
+	public static $report_types = array( 
+		'pivot'=>'Pivot', 
 		'data'=>'Data' );
 	public static $remove_columns = array( 
-		'user' => array('calendartype',
+		'user' => array('idnumber',
+			'calendartype',
 			'secret',
 			'trustbitmask',
 			'password', 
 			'mnethostid', 
 			'theme'),
-		'course' => array('id', 
-			'idnumber', 
+		'course' => array('idnumber', 
 			'sortorder',
 			'groupmodeforce',
 			'cacherev',
@@ -47,6 +50,18 @@ class report {
 			'reaggregate')
 		);
 
+	public static $valid_tables	= array(
+		'user' => 'Users', 
+		'course' => 'Courses',
+		'course_completions' => 'Course Completions'
+		);
+		
+	public static $operators = array('<' => 'less than', 
+		 '>' => 'greater than' ,
+		'=' => 'equals',
+		'!=' => 'not equal'
+		);
+
 	function __CONSTRUCT(){
 		global $DB;
 		$category_records = $DB->get_recordset_sql("select id, name from {course_categories}");
@@ -56,6 +71,9 @@ class report {
 	 	{
 	    	$this->categories[$category->id] = strtolower($category->name);
 	    }
+
+	    $category_records->close();
+
 	}
 
 	public function get_data(){
@@ -83,22 +101,26 @@ class report {
 				}
 			}
 
-			$this->query .= ' from ';
+			$this->query .= ' from {'.$this->base_table.'} '.$this->base_table;
 
-			end($this->tables);
-			$last_key = key($this->tables);
-			foreach( $this->tables as $key => $table ){
-				$this->query .= 'mdl_'.$table. ' '.$table;
-				if( $key == $last_key ){
-					$this->query .= ' ';
-				} else {
-					$this->query .= ', ';
+			// add ability to select fields from mulitple tables with where clause
+			// add ability to create calc columns based on selected columns
+
+			if( isset( $this->joins ) ){
+				foreach( $this->joins as $join ){
+					if( $join['join_table'] != '-' ){
+						$this->query .= ' inner join {'.$join['join_table'].'} '.
+							$join['join_table'].' on '.$join['join_col_1'];
+						$this->query .= ' '.$join['join_op'].'
+							'.$join['join_col_2'];
+					}
 				}
 			}
 			
 			if( isset($this->order_by) ){
 				$this->query .= ' order by '.$this->order_by.' desc';
 			}
+			print_r( 'QUERY{ '.$this->query.' }' );
 			$this->record_set = $DB->get_recordset_sql($this->query);
 		}
 	}
@@ -144,7 +166,10 @@ class report {
 	         	 * reocrd. When printing the category, convert category
 	         	 * to name.
 	         	 */
-	         	 $dept_summaries[$course->department]->increment_category($course->category);
+	         	 $minutes = time_spent($course->timestarted,
+	         	 	$course->timecompleted);
+	         	 $dept_summaries[$course->department]->increment_category($course->category,
+	         	 	$minutes);
 	   	   }
    	   }
 
@@ -160,8 +185,8 @@ class report {
             echo '<tr>';
             echo '<th>Department</th>';
             echo '<th>Skill</th>';
-            echo '<th>Hours</th>';
-            echo '<th>Sum</th>';
+            echo '<th>Hours (Mins)</th>';
+            echo '<th>Sum (Mins)</th>';
             echo '</tr>';
             foreach( $this->dept_sums as $summary ) {
         		$categories = $summary->get_categories();
@@ -171,12 +196,15 @@ class report {
         		$id = current(array_keys($categories));
         		echo '<tr>';
         		echo '<td rowspan="'.$cat_count.'">'.$summary->get_dept().'</td>';
-        		echo'<td>'.$categories[$id].'</td><td>'.$summary->get_category_hours($id).'</td>';
-        		echo '<td rowspan="'.$cat_count.'">'.$summary->get_dept_total().'</td>';
+        		echo'<td>'.$categories[$id].'</td><td>'.
+        			round($summary->get_category_hours($id), 2).'</td>';
+        		echo '<td rowspan="'.$cat_count.'">'.
+        			round($summary->get_dept_total(), 2).'</td>';
         		echo '</tr>';
         		foreach( $categories as $cat_id=>$cat_name ){
                 	if( $cat_id != $id ){
-                        echo '<tr><td>'.$cat_name.'</td><td>'.$summary->get_category_hours($cat_id).'</td></tr>';
+                        echo '<tr><td>'.$cat_name.'</td><td>'.
+                        	round($summary->get_category_hours($cat_id), 2).'</td></tr>';
                     }
                 }
             }
@@ -189,6 +217,8 @@ class report {
 		}
 
 		$this->rows = simpleHtmlTable($this->record_set, $this->columns);
+
+		$this->record_set->close();
 	}
 
 	public function csv_link(){
@@ -207,8 +237,8 @@ class report {
 	}
 
 	// new_tables should be an array containing names of table sto be queried
-	public function set_tables( $new_tables ){
-		$this->tables = $new_tables;
+	public function set_base( $new_base ){
+		$this->base_table = $new_base;
 	}
 
 	// new_fields should be an array containing the fields to be selected 
@@ -222,8 +252,18 @@ class report {
 		$this->calcs = $new_calcs;
 	}
 
+	public function set_joins( $new_join ){
+		$this->joins = array_values($new_join);
+	}
+
+	public function add_where( $new_where ){
+		$this->where_clause = $new_where;
+	}
+
 	public function set_order_by ( $new_order ){
-		$this->order_by = $new_order;
+		if( $new_order != '-' ){
+			$this->order_by = $new_order;
+		}
 	}
 
 	public function set_query( $new_query ){
@@ -237,6 +277,10 @@ class report {
 
 	public function get_recordset(){
 	
+	}
+
+	public function get_joins(){
+		return $this->joins;
 	}
 
 	public function get_columns(){

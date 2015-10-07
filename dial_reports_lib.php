@@ -37,6 +37,7 @@ class dial_reports_lib {
 		"29" => "Training and Development",
 		"30" => "Vivace"
 		);
+	public static $date_format = "Y-m-d H:i:s";
 	
 	function __CONSTRUCT(){
 		global $DB;
@@ -272,12 +273,26 @@ $averageCbk = function($reg)
     return round($reg['clicks']/$reg['users'],2);
 };
 
+/* @param: 
+ * $start: time a course was started in seconds from unix epoch
+ * $finish: time  course was scompleted in seconds from unix epoch
+ * @return: minutes it took to complete the course
+ */
+function time_spent($start, $finished){
+	if ( $finished < $start ){
+		return null;
+	}
+
+	return ($finished-$start)/60;
+}
+
 function simpleHtmlTable($data,$headers)
 {
 	if( !$data->valid() || empty($headers) ){
 		return null;
 	}
 	$rows = array();
+	$keys = array();
 	echo "<table border='1'>";
 	echo "<thead>";
 	foreach ($headers as $item) {
@@ -288,14 +303,20 @@ function simpleHtmlTable($data,$headers)
 		echo "<tr>";
 		$row = array();
 		foreach ($record as $key => $field) {
-			echo "<td>{$field}</td>";
-			$row[] = $field;
+			$keys[]=$key;	//breaks timezone
+			if( strpos($key, 'time') !== false 
+				|| strpos($key, 'date') !==	false){
+				$row[] = date(dial_reports_lib::$date_format, $field);
+				echo "<td>".date(dial_reports_lib::$date_format, $field)."</td>";
+			} else {
+				$row[] = round($field, 2);
+				echo "<td>".$field."</td>";
+			}
 		}
 		$rows[] = $row;
 		echo "</tr>";
 	}
 	echo "</table>";
-
 	return $rows;
 }
 
