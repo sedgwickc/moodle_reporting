@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__.'/../../config.php');
 require_once('common_reports/dept_sum.class.php');
 require_once(__DIR__.'/report.class.php');
 include_once 'chromephp/ChromePhp.php';
@@ -286,7 +287,7 @@ function time_spent($start, $finished){
 	return ($finished-$start)/60;
 }
 
-function simpleHtmlTable($data,$headers)
+function simpleHtmlTable( $data, $headers )
 {
 	if( !$data->valid() || empty($headers) ){
 		return null;
@@ -320,3 +321,21 @@ function simpleHtmlTable($data,$headers)
 	return $rows;
 }
 
+function get_columns( $table ){
+	global $DB;
+
+	ChromePhp::log('get_columns(): Table->'.$table);
+	if( empty($table) ){
+		echo "get_columns(): Table not valid. ";
+		return null;
+	}
+
+	$tab_cols = array();
+	$tab_cols_records = $DB->get_recordset_sql('describe {'.$table.'}');
+	foreach( $tab_cols_records as $record ){
+		if( !in_array($record->field, report::$remove_columns[$table] ) ){ 
+			$tab_cols[$table.'.'.$record->field] = $table.'.'.$record->field;
+		}
+	}
+	return $tab_cols;
+}

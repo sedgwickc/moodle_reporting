@@ -18,7 +18,7 @@ class report {
 	private $calcs;
 	private $order_by;
 	private $joins;
-	private $where_clause;
+	private $where_clauses;
 	private $record_set;
 	private $tables;
 	private $fields;
@@ -103,7 +103,19 @@ class report {
 
 			$this->query .= ' from {'.$this->base_table.'} '.$this->base_table;
 
-			// add ability to select fields from mulitple tables with where clause
+			// Find way to detect the value typ ethat matches the values in a
+			// column
+			// Make a map of known numerical and string fields?
+			if( isset($this->where_clauses) ){
+				$this->query .= ' where ';
+				$last_key = key(end($this->where_clauses));
+				foreach( $this->where_clauses as $key => $clause ){
+					$this->query .= $clause[0].' '.$clause[1].' "'.$clause[2].'" ';
+					if( $key != $last_key ){
+						$this->query .= ' and ';
+					}
+				}
+			}
 			// add ability to create calc columns based on selected columns
 
 			if( isset( $this->joins ) ){
@@ -256,8 +268,8 @@ class report {
 		$this->joins = array_values($new_join);
 	}
 
-	public function add_where( $new_where ){
-		$this->where_clause = $new_where;
+	public function add_where_clause( $new_where ){
+		$this->where_clauses[] = $new_where;
 	}
 
 	public function set_order_by ( $new_order ){
@@ -277,6 +289,10 @@ class report {
 
 	public function get_recordset(){
 	
+	}
+
+	public function get_where_clauses(){
+		return $this->where_clauses;
 	}
 
 	public function get_joins(){

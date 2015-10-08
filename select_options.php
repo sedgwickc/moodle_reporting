@@ -59,6 +59,16 @@ if ($mform->is_cancelled()) {
 	$report->set_base( $_SESSION['report_base'] );
 	$report->set_joins( $data->joins );
 	$report->set_order_by( $data->order_by );
+
+	for( $i = 0; $i < $data->where_num; $i++ ){
+		if( $data->where_col != '-' ){
+			$report->add_where_clause( array( $data->where_col[$i],
+				$data->where_op[$i], $data->where_filter[$i] ) );
+		}
+	}
+
+	print_r( $report->get_where_clauses() );
+			
 } else {
 	// this branch is executed if the form is submitted but
 	// the data doesn't validate and the form should be
