@@ -18,15 +18,6 @@ class block_dial_reports extends block_base {
 		// change links based on user authorizations
 		$this->content = new stdClass();
         $this->content->text = <<<HTML
-		<h3>Common Reports:</h3>
-		<p>
-			<ul>
-				<li><a href="{$CFG->wwwroot}/blocks/dial_reports/common_reports/dept_summary.php" target="_blank">Department Summary
-					</a>
-				</li>
-			</ul>
-		</p>
-                                                                                                                                        
         <div id='reports_links'>
         	<a href='{$CFG->wwwroot}/blocks/dial_reports/home.php'> Create New
         	Report

@@ -307,10 +307,18 @@ function simpleHtmlTable( $data, $headers )
 			$keys[]=$key;	//breaks timezone
 			if( strpos($key, 'time') !== false 
 				|| strpos($key, 'date') !==	false){
-				$row[] = date(dial_reports_lib::$date_format, $field);
-				echo "<td>".date(dial_reports_lib::$date_format, $field)."</td>";
-			} else {
-				$row[] = round($field, 2);
+				$datum = date(dial_reports_lib::$date_format, $field);
+				$row[] = $datum;
+				echo "<td>".$datum."</td>";
+			} elseif( is_string($field) ){
+				$row[] = $field;
+				echo "<td>".$field."</td>";
+			}elseif ( is_float($field) ){
+				$datum = round( $field, 2 );
+				$row[] = $datum;
+				echo "<td>".$datum."</td>";
+			}else{
+				$row[] = $field;
 				echo "<td>".$field."</td>";
 			}
 		}
@@ -325,17 +333,18 @@ function get_columns( $table ){
 	global $DB;
 
 	ChromePhp::log('get_columns(): Table->'.$table);
+
 	if( empty($table) ){
 		echo "get_columns(): Table not valid. ";
 		return null;
 	}
-
-	$tab_cols = array();
+	$table_columns = array($table => array());
+	$columns = array();
 	$tab_cols_records = $DB->get_recordset_sql('describe {'.$table.'}');
 	foreach( $tab_cols_records as $record ){
 		if( !in_array($record->field, report::$remove_columns[$table] ) ){ 
-			$tab_cols[$table.'.'.$record->field] = $table.'.'.$record->field;
+			$table_columns[$table][$table.'.'.$record->field] = $record->field;
 		}
 	}
-	return $tab_cols;
+	return $table_columns;
 }

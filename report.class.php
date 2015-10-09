@@ -12,7 +12,7 @@ class report {
 
 	private $title;
 	private $type;
-	private $columns;
+	private $table_columns;
 	private $rows;
 	private $values;
 	private $calcs;
@@ -27,17 +27,22 @@ class report {
 	private $dept_sums;
 	
 	public static $report_types = array( 
-		'pivot'=>'Pivot', 
-		'data'=>'Data' );
+		'custom_user'=>'Custom Users Report', 
+		'custom_course'=>'Custom Courses Report', 
+		'custom_completions'=>'Custom Course Completions Report', 
+		'dept_hours' => 'Training hours per Department');
 	public static $remove_columns = array( 
-		'user' => array('idnumber',
+		'user' => array('id',
+			'idnumber',
 			'calendartype',
 			'secret',
 			'trustbitmask',
 			'password', 
 			'mnethostid', 
 			'theme'),
-		'course' => array('idnumber', 
+		'course' => array('id',
+			'category',
+			'idnumber', 
 			'sortorder',
 			'groupmodeforce',
 			'cacherev',
@@ -47,13 +52,24 @@ class report {
 			'marker', 
 			'legacyfiles'),
 		'course_completions' => array('id', 
-			'reaggregate')
+			'reaggregate'),
+		'course_categories' => array('depth',
+			'descriptionformat',
+			'id', 
+			'idnumber',
+			'parent',
+			'path',
+			'theme',
+			'timemodified',
+			'sortorder',
+			'visible',
+			'visibleold')
 		);
 
 	public static $valid_tables	= array(
-		'user' => 'Users', 
-		'course' => 'Courses',
-		'course_completions' => 'Course Completions'
+		'user' => 'user', 
+		'course' => 'course',
+		'course_completions' => 'course_completions'
 		);
 		
 	public static $operators = array('<' => 'less than', 
@@ -62,10 +78,19 @@ class report {
 		'!=' => 'not equal'
 		);
 
-	function __CONSTRUCT(){
+	function __CONSTRUCT($type){
 		global $DB;
+		if( isset($type) ){
+			$this->type = $type;
+		} else {
+			echo 'report::_CONTRUCT() - Cannot instantiate report without a
+				type. ';
+			return;
+		}
 		$category_records = $DB->get_recordset_sql("select id, name from {course_categories}");
 	 	$this->categories = array();
+
+
 
 	 	foreach ( $category_records as $category )
 	 	{
@@ -80,7 +105,7 @@ class report {
 
 		global $DB;
 
-		if( empty($this->columns) ){
+		if( empty($this->table_columns) ){
 			echo "->get_data(): Columns no set!";
 			return null;
 		}
@@ -88,27 +113,48 @@ class report {
 		if( isset( $this->query ) ){
 			$this->record_set = $DB->get_recordset_sql($this->query);
 		} else {
-
+			// Select clause
 			$this->query = 'select ';
-			end($this->columns);
-			$last_key = key($this->columns);
-			foreach( $this->columns as $key => $col ){
-				$this->query .= $col;
-				if( $key == $last_key ){
-					$this->query .= ' ';
-				} else {
-					$this->query .= ', ';
-				}
+			end($this->table_columns);
+			$last_key = key($this->table_columns);
+			foreach( $this->table_columns as $key => $column ){
+					$this->query .= $column;
+					if( $key == $last_key ){
+							$this->query .= ' ';
+					} else {
+						$this->query .= ', ';
+					}
+			}
+			//From clause
+			switch( $this->type ){
+				case 'custom_user':
+					$this->query .= ' from {'.self::$valid_tables['user'].'} '.
+						self::$valid_tables['user'];
+					break;
+				case 'custom_course':
+					$this->query .= ' from {'.self::$valid_tables['course'].'} '.
+						self::$valid_tables['course'].' inner join '.
+						'{course_categories} course_categories on course.category'. 
+						' = course_categories.id';
+					break;
+				case 'custom_completions':
+					$this->query .= 'from {course_completions} course_completions 
+						inner join {user} user on user.id = course_completions.userid 
+						inner join {course} course on course.id = course_completions.course';
+					break;
+				default:
+					break;
 			}
 
-			$this->query .= ' from {'.$this->base_table.'} '.$this->base_table;
+				
 
-			// Find way to detect the value typ ethat matches the values in a
+			// Find way to detect the value type that matches the values in a
 			// column
 			// Make a map of known numerical and string fields?
 			if( isset($this->where_clauses) ){
 				$this->query .= ' where ';
-				$last_key = key(end($this->where_clauses));
+				end($this->where_clauses);
+				$last_key = key($this->where_clauses);
 				foreach( $this->where_clauses as $key => $clause ){
 					$this->query .= $clause[0].' '.$clause[1].' "'.$clause[2].'" ';
 					if( $key != $last_key ){
@@ -141,7 +187,7 @@ class report {
 		global $DB;
 		//old dept_summary logic: use to parse report object data to create dept_sum
 		//objects
-		$this->columns = array('Department', 'Skill', 'Hours', 'Sum');
+		$this->table_columns = array('Department', 'Skill', 'Hours', 'Sum');
 		$this->tables = array('course_completions','course','course_categories');
 		
 		$this->record_set = $DB->get_recordset_sql(
@@ -173,11 +219,6 @@ class report {
 		foreach($this->record_set as $course) {
 			if(array_key_exists($course->department,$dept_summaries) 
 				&& $course->timecompleted !== null){
-	        	/* in department summaries, create an array that stores
-	         	 * cat_id=>total_hours then increment the value for each
-	         	 * reocrd. When printing the category, convert category
-	         	 * to name.
-	         	 */
 	         	 $minutes = time_spent($course->timestarted,
 	         	 	$course->timecompleted);
 	         	 $dept_summaries[$course->department]->increment_category($course->category,
@@ -228,13 +269,13 @@ class report {
 			$this->get_data();
 		}
 
-		$this->rows = simpleHtmlTable($this->record_set, $this->columns);
+		$this->rows = simpleHtmlTable($this->record_set, $this->table_columns);
 
 		$this->record_set->close();
 	}
 
 	public function csv_link(){
-		$_SESSION['report_columns'] = $this->columns;
+		$_SESSION['report_columns'] = $this->table_columns;
 		$_SESSION['report_rows'] = $this->rows;
 		echo "<a href= 'report2csv.php'>Download report as CSV file</a>";
 	}
@@ -245,7 +286,7 @@ class report {
 
 	// $new_columns should be an array of the names of the selected fields 
 	public function set_columns( $new_columns ){
-		$this->columns = $new_columns;
+		$this->table_columns = $new_columns;
 	}
 
 	// new_tables should be an array containing names of table sto be queried
@@ -300,7 +341,7 @@ class report {
 	}
 
 	public function get_columns(){
-		return $this->columns;
+		return $this->table_columns;
 	}
 
 }

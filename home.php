@@ -24,16 +24,28 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_url(new moodle_url('/blocks/dial_reports/home.php'));
 $PAGE->set_title('Generate Reports');
 $PAGE->set_heading('Generate Reports');
+
 $mform = new home_form();
 if( $mform->is_cancelled() ){
 	redirect($CFG->wwwroot);
 }elseif( $data = $mform->get_data() ) {
-	if( $data->type === 'data'){
-		$_SESSION['report_type'] = 'data';
-		redirect( new moodle_url('/blocks/dial_reports/select_data.php'));
-	}elseif( $data->type === 'pivot' ){
-		$_SESSION['report_type'] = 'pivot';
-		redirect( new moodle_url('/blocks/dial_reports/select_data.php'));
+	switch( $data->type ){
+		case 'custom_user':
+			$_SESSION['report_type'] = 'custom_user';
+			redirect( new moodle_url('/blocks/dial_reports/select_options.php'));
+			break;
+		case 'custom_course':
+			$_SESSION['report_type'] = 'custom_course';
+			redirect( new moodle_url('/blocks/dial_reports/select_options.php'));
+			break;
+		case 'custom_completions':
+			$_SESSION['report_type'] = 'custom_completions';
+			redirect( new moodle_url('/blocks/dial_reports/select_options.php'));
+			break;
+		case 'dept_hours':
+			redirect( new
+				moodle_url('/blocks/dial_reports/common_reports/dept_summary.php'));
+			break;
 	}
 }else{
 }
@@ -56,6 +68,7 @@ echo $OUTPUT->header();
             <section>
                 <article id="main_article">
                 <h2>Welcome to Rewards Reporting</h2>
+
                	<p>
                	<?php
 					$mform->display();

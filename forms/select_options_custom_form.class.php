@@ -6,7 +6,7 @@ require_once(__DIR__."/../../../config.php");
 require_once(__DIR__."/../report.class.php");
 require_once(__DIR__."/../dial_reports_lib.php");
 
-class select_options_data_form extends moodleform {
+class select_options_custom_form extends moodleform {
 	
 	//Add elements to form
 	public function definition() {
@@ -14,24 +14,51 @@ class select_options_data_form extends moodleform {
 
 		$mform = &$this->_form; 
 
-		$tables = report::$valid_tables;
-		$all_cols = array();
-		foreach( $tables as $table => $name){
-			$all_cols = array_merge( $all_cols, get_columns( $table ) );
+		switch( $_SESSION['report_type'] ){
+			case 'custom_user':
+				$table_columns = get_columns(report::$valid_tables['user']);
+				break;
+			case 'custom_course':
+				$table_columns = get_columns(report::$valid_tables['course']);
+				$table_columns = array_merge( $table_columns, get_columns(
+					'course_categories'));
+				break;
+			case 'custom_completions':
+				$tables = report::$valid_tables;
+				$table_columns = array();
+				foreach( $tables as $table => $name){
+					$table_columns = array_merge( $table_columns, get_columns( $table ) );
+				}
+				break;
+			default:
+				break;
 		}
-		$ops = report::$operators;
-		$base_table = $_SESSION['report_base'];
-		$base_cols = get_columns( $base_table );
 
-		$select_col = $mform->addElement('select', 'columns', get_string('select_col',
-			'block_dial_reports'), $base_cols, array('size'=>count($base_cols)/2,
-			'required'));
-		$select_col->setMultiple(true);
-		unset($tables[$base_table]);
-		$table_options= array_prepend( $tables, '-', '-' );
+		$ops = report::$operators;
+		/* refactor below code to output columns based on new $table_columns
+		 * structure. 
+		 */
+
+		// functionality: user selects columns to include -> generator joins
+		// tables as necessary. Conditions are implied based on the tables
+		// involved (i.e. User.first name, course_completions.* -> join on
+		// userid)
+		$all_cols = array();
+		foreach( $table_columns as $table => $columns ){
+			$count = count($columns);
+			if( $count > 10 ){
+				$count = $count / 2;
+			}
+			asort($columns);
+
+			$select_col = $mform->addElement('select', $table.'_columns',
+				'Select '.$table.' columns:', $columns, array('size'=>$count));
+			$select_col->setMultiple(true);
+			$all_cols = array_merge( $all_cols, $columns );
+		}
 		$tab_cols = array_prepend( $all_cols, '-', '-' );
 		$ops = array_prepend( $ops, '-', '-' );
-
+/*
 		$repeatno = count($tables);
 		if( $repeatno >= 1 ){
 			$num = 0;
@@ -61,14 +88,16 @@ class select_options_data_form extends moodleform {
 			}
 			$mform->addElement('group', 'joins', get_string('Add Join'), $groups);
 		}
-
+*/
 		$where_items = array();
 		$where_items[] = $mform->createElement('select', 'where_col', 'Select
 			column to filter on: ', $tab_cols);
 		$where_items[] = $mform->createElement('select', 'where_op', 'Select
 			filter operation: ', $ops);
 		$where_items[] = $mform->createElement('text', 'where_filter', 'Enter
-			a value or column to filter by: ');
+			a value by: ');
+		$where_items[] =& $mform->createElement( 'static', 'where_example',
+			'', '<b>e.g. DD-MM-YYYY, trainee3, Business Writing: Email<b><br>');
 
 		$wherenum = 1;
 

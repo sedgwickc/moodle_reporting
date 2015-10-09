@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 require_once(__DIR__.'/../../config.php');
 require_once('report.class.php');
-require_once('forms/select_options_data_form.class.php');
+require_once('forms/select_options_custom_form.class.php');
 require_once('forms/select_options_pivot_form.class.php');
 
 require_login();
@@ -34,13 +34,11 @@ if( empty($type) ){
 	echo 'No Type Set!';
 	redirect( new moodle_url('/my') );
 }
-
 switch($type){
-	case 'data':
-		$mform = new select_options_data_form();
-		break;
-	case 'pivot':
-		$mform = new select_options_pivot_form();
+	case 'custom_course':
+	case 'custom_completions':
+	case 'custom_user':
+		$mform = new select_options_custom_form();
 		break;
 	default:
 		echo 'Type is Invalid!';
@@ -52,28 +50,37 @@ if ($mform->is_cancelled()) {
 	// Redircet user to dashbosrd page
 	redirect(new moodle_url('/blocks/dial_reports/reports/home.php'));
 } elseif ($data = $mform->get_data()) {
-	print_r($data);
 	$title = 'Genereted '.$type.' Report';
-	$report = new report();
-	$report->set_columns( $data->columns );
-	$report->set_base( $_SESSION['report_base'] );
-	$report->set_joins( $data->joins );
+	$report = new report($type);
+	$columns = array();
+	if( isset( $data->user_columns ) ){
+		$columns = array_merge( $columns, $data->user_columns);
+	}
+	if( isset( $data->course_columns ) ) {
+		$columns = array_merge( $columns, $data->course_columns);
+	}
+	if( isset( $data->course_completions_columns ) ){
+		$columns = array_merge( $columns, $data->course_completions_columns);
+	}
+	if( isset( $data->course_categories_columns ) ){
+		$columns = array_merge( $columns, $data->course_categories_columns);
+	}
+	// Pass only the columns selected for the table. Joins are implied by the
+	// report type selected
+	$report->set_columns( $columns );
 	$report->set_order_by( $data->order_by );
-
 	for( $i = 0; $i < $data->where_num; $i++ ){
-		if( $data->where_col != '-' ){
+		if( $data->where_col[$i] != '-' ){
 			$report->add_where_clause( array( $data->where_col[$i],
 				$data->where_op[$i], $data->where_filter[$i] ) );
 		}
 	}
-
-	print_r( $report->get_where_clauses() );
 			
 } else {
 	// this branch is executed if the form is submitted but
 	// the data doesn't validate and the form should be
 	// redisplayed or on the first display of the form.
-	$title = 'Select Options '.$type.' for Data Table';
+	$title = 'Select Options for '.$type.' Table';
 }
 $PAGE->set_heading($title);
 $PAGE->set_title($title);

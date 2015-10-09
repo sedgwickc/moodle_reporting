@@ -13,13 +13,10 @@ class home_form extends moodleform {
 		$mform = &$this->_form; // Don't forget the underscore!
 		$report_types = report::$report_types;
 
-		$mform->addElement('select', 'type', get_string('report_type', 'block_dial_rewards'),
+		$mform->addElement('select', 'type', get_string('report_type', 'block_dial_reports'),
 			$report_types);
-		$mform->setDefault('select', $report_types['pivot']);
-		$this->add_action_buttons(true, get_string('create_report', 'block_dial_rewards'));
-
-		                                 
-		//Default value...
+		$mform->setDefault('select', $report_types['custom_user']);
+		$this->add_action_buttons(true, get_string('get_report', 'block_dial_reports'));
 	}
 
 	//Custom
