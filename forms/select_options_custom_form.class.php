@@ -29,16 +29,14 @@ class select_options_custom_form extends moodleform {
 				foreach( $tables as $table => $name){
 					$table_columns = array_merge( $table_columns, get_columns( $table ) );
 				}
+				$table_columns['course_completions']['course_completions.total_minutes']
+					= 'training time (Minutes)';
 				break;
 			default:
 				break;
 		}
 
 		$ops = report::$operators;
-		/* refactor below code to output columns based on new $table_columns
-		 * structure. 
-		 */
-
 		// functionality: user selects columns to include -> generator joins
 		// tables as necessary. Conditions are implied based on the tables
 		// involved (i.e. User.first name, course_completions.* -> join on

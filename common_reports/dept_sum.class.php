@@ -3,7 +3,6 @@
 class dept_sum {
 
 	private $cat_sums;
-	private $remarks = 'None';
 	private $dept;
 	private $categories;
 	private $category_hours;
@@ -35,10 +34,6 @@ class dept_sum {
 		return $this->dept;
 	}
 
-	public function get_remarks(){
-		return $this->remarks;
-	}
-
 	public function get_category_hours( $id ){
 		return $this->cat_sums[$id];
 	}
@@ -51,7 +46,4 @@ class dept_sum {
 		$this->dept = $new_dept;
 	}
 	
-	public function set_remarks($new_remarks){
-		$this->remarks = $new_remarks;
-	}
 }

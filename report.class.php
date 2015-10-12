@@ -78,6 +78,12 @@ class report {
 		'!=' => 'not equal'
 		);
 
+	public static $calculations = array('SUM' => 'SUM', 
+		'COUNT' => 'COUNT',
+		'MAX' => 'MAX',
+		'MIN' => 'MIN'
+		);
+
 	function __CONSTRUCT($type){
 		global $DB;
 		if( isset($type) ){
@@ -110,6 +116,14 @@ class report {
 			return null;
 		}
 
+
+		/* Add check for calculations before processing selected columns. If a
+		 * calc is requestested then include it in the select statement
+		 * 
+		 * There is also the ability to create custom mathematical calculations
+		 * in a select statement 
+		 * -> course completions report: time taken to complete a course.
+		 */
 		if( isset( $this->query ) ){
 			$this->record_set = $DB->get_recordset_sql($this->query);
 		} else {
@@ -118,13 +132,20 @@ class report {
 			end($this->table_columns);
 			$last_key = key($this->table_columns);
 			foreach( $this->table_columns as $key => $column ){
-					$this->query .= $column;
+					if( $column == 'course_completions.total_minutes' ){
+						$this->query .= ' format(((course_completions.timecompleted -
+							course_completions.timestarted) / 60), 2) as "Training
+							Minutes"';
+					} else {
+						$this->query .= $column;
+					}
 					if( $key == $last_key ){
 							$this->query .= ' ';
 					} else {
 						$this->query .= ', ';
 					}
 			}
+			
 			//From clause
 			switch( $this->type ){
 				case 'custom_user':

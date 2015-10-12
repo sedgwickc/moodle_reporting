@@ -26,7 +26,7 @@ $PAGE->set_title('Rewards Summary');
 $PAGE->set_heading('Rewards Summary by Department');
 echo $OUTPUT->header();
 
-$dept_report = new report();
+$dept_report = new report('dept_hours');
 $dept_report->create_dept_report();
 ?>
 <html lang="en"> 
