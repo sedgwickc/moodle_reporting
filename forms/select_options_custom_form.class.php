@@ -91,6 +91,7 @@ class select_options_custom_form extends moodleform {
 			filter operation: ', $ops);
 		$where_items[] = $mform->createElement('text', 'where_filter', 'Enter
 			a value by: ');
+		$mform->setType('where_filter', PARAM_NOTAGS);
 		$where_items[] =& $mform->createElement( 'static', 'where_example',
 			'', '<b>e.g. DD-MM-YYYY, trainee3, Business Writing: Email<b><br>');
 
