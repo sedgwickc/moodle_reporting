@@ -17,11 +17,18 @@ class select_options_custom_form extends moodleform {
 		switch( $_SESSION['report_type'] ){
 			case 'custom_user':
 				$table_columns = get_columns(report::$valid_tables['user']);
+				$calc_type = array('total' =>'Total number of users', 
+					'dept' => 'Total number of users per department', 
+					'city' => 'Total number of users per city',
+					'min_dept' => 'Department with fewest users');
 				break;
 			case 'custom_course':
 				$table_columns = get_columns(report::$valid_tables['course']);
 				$table_columns = array_merge( $table_columns, get_columns(
 					'course_categories'));
+				$calc_type = array('total' =>'Total number of courses', 
+					'min_num' => 'Category with fewest courses',
+					'max_num' => 'Category with the most courses');
 				break;
 			case 'custom_completions':
 				$tables = report::$valid_tables;
@@ -31,12 +38,16 @@ class select_options_custom_form extends moodleform {
 				}
 				$table_columns['course_completions']['course_completions.total_minutes']
 					= 'training time (Minutes)';
+				$calc_type = array('total' =>'Total Sum of training minutes', 
+					'category' => 'Sum of training minutes per category', 
+					'user' => 'Sum of training minutes per user', 
+					'min_time' => 'shortest completion time',
+					'max_time' => 'Longest completion time');
 				break;
 			default:
 				break;
 		}
-
-		$ops = report::$operators;
+		$calc_type = array_prepend( $calc_type, '-', '-');
 		// functionality: user selects columns to include -> generator joins
 		// tables as necessary. Conditions are implied based on the tables
 		// involved (i.e. User.first name, course_completions.* -> join on
@@ -55,38 +66,24 @@ class select_options_custom_form extends moodleform {
 			$all_cols = array_merge( $all_cols, $columns );
 		}
 		$tab_cols = array_prepend( $all_cols, '-', '-' );
+		$ops = report::$operators;
 		$ops = array_prepend( $ops, '-', '-' );
-/*
-		$repeatno = count($tables);
-		if( $repeatno >= 1 ){
-			$num = 0;
-			$groups = array();
-			
-			foreach( $tables as $table) {
-				$join_items = array();
-				//use hidden element to pass table to join on instead of select?
-				$join_items[] =& $mform->createElement( 'select', 'join_table', 
-					'Select new table to join data from: ', $table_options);
-				$join_items[] =& $mform->createElement( 'static', 'join_break',
-					'', '<br>');
-				$join_items[] =& $mform->createElement( 'select', 'join_col_1', 
-					'Select column from new table to join on: ', $tab_cols);
-				$join_items[] =& $mform->createElement( 'static', 'join_break',
-					'', '<br>');
-				$join_items[] =& $mform->createElement( 'select', 'join_op', 
-					'Select condition operator: ', $ops);
-				$join_items[] =& $mform->createElement( 'static', 'join_break',
-					'', '<br>');
-				$join_items[] =& $mform->createElement( 'select', 'join_col_2',
-					'Select base table column to join new table on: ', $tab_cols);
+		$calcs = report::$calculations;
+		$calcs = array_prepend( $calcs, '-', '-' );
+		
+		$calc_items = array();
+		$calc_items[] = $mform->createElement('select', 'calc_type', 'Select
+			Calculation: ', $calc_type);
+		$calcnum = 1;
 
-				$groups[] =& $mform->createElement('group', 'join_'.$num,
-					get_string('add_join', 'block_dial_reports'), $join_items );
-				$num++;
-			}
-			$mform->addElement('group', 'joins', get_string('Add Join'), $groups);
-		}
-*/
+		$calcoptions = array();
+		$calcoptions[] = array();
+		$calcoptions[] = array();
+		$calcoptions[] = array();
+
+		$this->repeat_elements($calc_items, $calcnum, $calcoptions,
+			'calc_num', 'calc_add', $calcnum, 'Add Calculation');
+
 		$where_items = array();
 		$where_items[] = $mform->createElement('select', 'where_col', 'Select
 			column to filter on: ', $tab_cols);
