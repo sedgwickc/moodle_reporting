@@ -6,44 +6,12 @@ include_once 'chromephp/ChromePhp.php';
 
 class dial_reports_lib {
 
-    private $categories;
-	public static $departments = array("1" => "Accounting",
-		"2" => "CEO's office",
-		"3" => "Continuous Improvement",
-		"4" => "Customer Survey",
-		"5" => "Door Line",
-		"6" => "Glass Line",
-		"7" => "GM's Office",
-		"8" => "HR",
-		"9" => "HSE",
-		"10" =>	"Hybrid	Line",
-		"11" =>	"Information",
-		"12" =>	"Order Desk",
-		"13" =>	"Installation",
-		"14" =>	"IT",
-		"15" =>	"Machining",
-		"16" =>	"Maintenance",
-		"17" =>	"Marketing",
-		"18" =>	"Materials",
-		"19" =>	"Ops Manager's Office",
-		"20" => "President's office",
-		"21" =>	"PVC",
-		"22" => "Quality",
-		"23" => "R&D",
-		"24" => "Sales",
-		"25" => "Scheduling",
-		"26" => "Security",
-		"27" => "Service",
-		"28" => "Shiping",
-		"29" => "Training and Development",
-		"30" => "Vivace"
-		);
-	public static $date_format = "Y-m-d H:i:s";
-	
 	function __CONSTRUCT(){
 		global $DB;
 
-		$category_records = $DB->get_recordset_sql("select id,name from {course_categories}");
+		$category_records = $DB->get_recordset_sql("select id,name from
+			{course_categories} where name='mandatory' or name='core skills' or
+			'soft skills'");
 		$this->categories = array();
 
 		foreach ( $category_records as $category ) {
@@ -91,6 +59,15 @@ function time_spent($start, $finished){
 
 function simpleHtmlTable( $data, $headers )
 {
+	$date_format = "Y-m-d H:i:s";
+	$time_fields = array('timestarted',
+					'timecompleted',
+					'timeenrolled',
+					'timecreated',
+					'timemodified',
+					'startdate',
+					'lastlogin',
+					'lastaccess');
 	if( !$data->valid() || empty($headers) ){
 		return null;
 	}
@@ -107,9 +84,11 @@ function simpleHtmlTable( $data, $headers )
 		$row = array();
 		foreach ($record as $key => $field) {
 			$keys[]=$key;	//breaks timezone
-			if( strpos($key, 'time') !== false 
-				|| strpos($key, 'date') !==	false){
-				$datum = date(dial_reports_lib::$date_format, $field);
+			if( empty($field) ){
+				$row[] = $field;
+				echo "<td>No Data</td>";
+			}elseif( in_array($key, $time_fields)){
+				$datum = date($date_format, $field);
 				$row[] = $datum;
 				echo "<td>".$datum."</td>";
 			} elseif( is_string($field) ){

@@ -16,7 +16,6 @@
 require_once(__DIR__.'/../../../config.php');
 require_once(__DIR__.'/../dial_reports_lib.php');
 require_once(__DIR__.'/dept_sum.class.php');
-require_once('chromephp/ChromePhp.php');
 
 require_login();
 $PAGE->set_context(context_system::instance());

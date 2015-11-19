@@ -48,7 +48,7 @@ switch($type){
 
 if ($mform->is_cancelled()) {
 	// Redircet user to dashbosrd page
-	redirect(new moodle_url('/blocks/dial_reports/reports/home.php'));
+	redirect(new moodle_url('/blocks/dial_reports/home.php'));
 } elseif ($data = $mform->get_data()) {
 	$title = 'Genereted '.$type.' Report';
 	$report = new report($type);

@@ -33,6 +33,14 @@ class report {
 		'dept_hours' => 'Training hours per Department');
 	public static $remove_columns = array( 
 		'user' => array('id',
+			'address',
+			'aim',
+			'autosubscribe',
+			'country',
+			'descriptionformat',
+			'icq',
+			'msn',
+			'yahoo',
 			'idnumber',
 			'calendartype',
 			'secret',
@@ -42,6 +50,8 @@ class report {
 			'theme'),
 		'course' => array('id',
 			'category',
+			'calendartype',
+			'summaryformat',
 			'idnumber', 
 			'sortorder',
 			'groupmodeforce',
@@ -93,10 +103,12 @@ class report {
 				type. ';
 			return;
 		}
-		$category_records = $DB->get_recordset_sql("select id, name from {course_categories}");
+
+		$category_records = $DB->get_recordset_sql("select id,name from
+	        {course_categories} where name='mandatory' or
+	        name='core skills' or name='soft skills'");
+
 	 	$this->categories = array();
-
-
 
 	 	foreach ( $category_records as $category )
 	 	{
@@ -105,6 +117,13 @@ class report {
 
 	    $category_records->close();
 
+	}
+
+	public function get_depts(){
+		global $DB;
+
+		$depts = $DB->get_records_sql("select * from {block_dial_reports_depts}");
+		return $depts;
 	}
 
 	public function get_data(){
@@ -199,16 +218,33 @@ class report {
 			if( isset($this->order_by) ){
 				$this->query .= ' order by '.$this->order_by.' desc';
 			}
-			print_r( 'QUERY{ '.$this->query.' }' );
+			//print_r( 'QUERY{ '.$this->query.' }' );
 			$this->record_set = $DB->get_recordset_sql($this->query);
 		}
 	}
+
+    //retrieve parent category
+    public function get_skill($cat_id){
+            global $DB;
+
+            $category = $DB->get_record_sql("select * from {course_categories} where
+                    id = :cid", array( "cid" => $cat_id) );
+            if( empty($category) ){
+                    return BLOCK_DIAL_REWARDS_FAILURE;
+            }
+
+            while( $category->parent != 0 )
+            {
+                    $category = $DB->get_record_sql("select * from {course_categories} where id =
+                            :parent", array('parent'=>$category->parent));
+            }
+            return strtolower($category->id);
+    }
 
 	public function create_dept_report(){
 		global $DB;
 		//old dept_summary logic: use to parse report object data to create dept_sum
 		//objects
-		$this->table_columns = array('Department', 'Skill', 'Hours', 'Sum');
 		$this->tables = array('course_completions','course','course_categories');
 		
 		$this->record_set = $DB->get_recordset_sql(
@@ -223,30 +259,34 @@ class report {
 			return null;
 		}
 
-		$depts = dial_reports_lib::$departments;
+		$depts = $this->get_depts();
 		$dept_summaries = array();
-		foreach ($depts as $id => $dept) {
+		foreach ($depts as $dept) {
+			$dept_name = strtolower($dept->dept_name);
 	    	$dept_summary = new dept_sum();
-			$dept_summary->set_dept($dept);
+			$dept_summary->set_dept($dept_name);
 			$dept_summary->init_categories($this->categories);
 			if(empty($dept_summaries)){
-				$dept_summaries = array($id=>$dept_summary);
+				$dept_summaries = array($dept_name=>$dept_summary);
 			}
 			else
 			{
-				$dept_summaries[$id] = $dept_summary;
+				$dept_summaries[$dept_name] = $dept_summary;
 	    	}
 		}
 		foreach($this->record_set as $course) {
 			if(array_key_exists($course->department,$dept_summaries) 
 				&& $course->timecompleted !== null){
-	         	 $minutes = time_spent($course->timestarted,
-	         	 	$course->timecompleted);
-	         	 $dept_summaries[$course->department]->increment_category($course->category,
-	         	 	$minutes);
+	         	 $minutes = time_spent($course->timestarted, $course->timecompleted);
+	         	 if( $minutes > 0 ){
+	         	 	// call get_skill() to get skill course is associated with
+	         	 	// in order to increment it
+	         	 	$skill = $this->get_skill($course->category);
+	         	 	 $dept_summaries[$course->department]->increment_category($skill,
+	         	 		$minutes);
+	         	 	}
 	   	   }
    	   }
-
    	   $this->dept_sums = $dept_summaries;
 	}
 
@@ -259,8 +299,8 @@ class report {
             echo '<tr>';
             echo '<th>Department</th>';
             echo '<th>Skill</th>';
-            echo '<th>Hours (Mins)</th>';
-            echo '<th>Sum (Mins)</th>';
+            echo '<th>Time per Skill (Mins)</th>';
+            echo '<th>Total Time (Mins)</th>';
             echo '</tr>';
             foreach( $this->dept_sums as $summary ) {
         		$categories = $summary->get_categories();

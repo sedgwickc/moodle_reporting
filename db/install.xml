@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/dial_rewards/db" VERSION="20150921" COMMENT="XMLDB file for Moodle blocks/dial_rewards"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="block_dial_reports_depts" COMMENT="This table keeps track 
+    of the departments that exist at Durabuilt">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="dept_name" TYPE="char" LENGTH="140" NOTNULL="true" 
+        	DEFAULT="dept_name" SEQUENCE="false" COMMENT="The name of a
+        	department"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id,dept_name"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
