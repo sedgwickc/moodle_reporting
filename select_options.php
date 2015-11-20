@@ -20,7 +20,7 @@ require_once('forms/select_options_pivot_form.class.php');
 
 require_login();
 $PAGE->set_context(context_system::instance());
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('frametop');
 $PAGE->set_url(new
 	moodle_url('/blocks/dial_reports/select_options.php'));
 if( isset( $_SESSION['report_type'] ) ){

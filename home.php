@@ -20,7 +20,7 @@ include_once('chromephp/ChromePhp.php');
 
 require_login();
 $PAGE->set_context(context_system::instance());
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('frametop');
 $PAGE->set_url(new moodle_url('/blocks/dial_reports/home.php'));
 $PAGE->set_title('Generate Reports');
 $PAGE->set_heading('Generate Reports');

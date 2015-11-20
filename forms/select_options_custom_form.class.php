@@ -17,6 +17,7 @@ class select_options_custom_form extends moodleform {
 		switch( $_SESSION['report_type'] ){
 			case 'custom_user':
 				$table_columns = get_columns(report::$valid_tables['user']);
+				$table_columns['user']['user.position'] = 'Position';
 				$calc_type = array('total' =>'Total number of users', 
 					'dept' => 'Total number of users per department', 
 					'city' => 'Total number of users per city',
@@ -31,13 +32,14 @@ class select_options_custom_form extends moodleform {
 					'max_num' => 'Category with the most courses');
 				break;
 			case 'custom_completions':
-				$tables = report::$valid_tables;
-				$table_columns = array();
-				foreach( $tables as $table => $name){
-					$table_columns = array_merge( $table_columns, get_columns( $table ) );
-				}
+				$table_columns = get_columns(report::$valid_tables['course']);
+				$table_columns = array_merge($table_columns,
+					get_columns(report::$valid_tables['user']));
+				$table_columns = array_merge( $table_columns,
+					get_columns(report::$valid_tables['course_completions']));
 				$table_columns['course_completions']['course_completions.total_minutes']
 					= 'training time (Minutes)';
+				$table_columns['user']['user.position'] = 'Position';
 				$calc_type = array('total' =>'Total Sum of training minutes', 
 					'category' => 'Sum of training minutes per category', 
 					'user' => 'Sum of training minutes per user', 

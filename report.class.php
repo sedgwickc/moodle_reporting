@@ -76,11 +76,10 @@ class report {
 			'visibleold')
 		);
 
-	public static $valid_tables	= array(
-		'user' => 'user', 
-		'course' => 'course',
-		'course_completions' => 'course_completions'
-		);
+	public static $valid_tables	= array('user'=>'user', 
+		'course'=>'course',
+		'course_completions'=>'course_completions',
+		'custom_field'=>'user_info_data');
 		
 	public static $operators = array('<' => 'less than', 
 		 '>' => 'greater than' ,
@@ -88,11 +87,10 @@ class report {
 		'!=' => 'not equal'
 		);
 
-	public static $calculations = array('SUM' => 'SUM', 
-		'COUNT' => 'COUNT',
-		'MAX' => 'MAX',
-		'MIN' => 'MIN'
-		);
+	public static $calculations = array('SUM', 
+		'COUNT',
+		'MAX',
+		'MIN');
 
 	function __CONSTRUCT($type){
 		global $DB;
@@ -134,8 +132,6 @@ class report {
 			echo "->get_data(): Columns no set!";
 			return null;
 		}
-
-
 		/* Add check for calculations before processing selected columns. If a
 		 * calc is requestested then include it in the select statement
 		 * 
@@ -155,7 +151,9 @@ class report {
 						$this->query .= ' format(((course_completions.timecompleted -
 							course_completions.timestarted) / 60), 2) as "Training
 							Minutes"';
-					} else {
+					} elseif( $column == 'user.position' ){
+						$this->query .= 'user_info_data.data';
+					}else {
 						$this->query .= $column;
 					}
 					if( $key == $last_key ){
@@ -169,7 +167,10 @@ class report {
 			switch( $this->type ){
 				case 'custom_user':
 					$this->query .= ' from {'.self::$valid_tables['user'].'} '.
-						self::$valid_tables['user'];
+						self::$valid_tables['user'].' inner join
+						{'.self::$valid_tables['custom_field'].'} '.
+						self::$valid_tables['custom_field'].' on user.id =
+						user_info_data.userid and fieldid=1';
 					break;
 				case 'custom_course':
 					$this->query .= ' from {'.self::$valid_tables['course'].'} '.
@@ -180,13 +181,15 @@ class report {
 				case 'custom_completions':
 					$this->query .= 'from {course_completions} course_completions 
 						inner join {user} user on user.id = course_completions.userid 
-						inner join {course} course on course.id = course_completions.course';
+						inner join {course} course on course.id = course_completions.course
+						inner join {'.self::$valid_tables['custom_field'].'} '.
+						self::$valid_tables['custom_field'].' on user.id =
+						user_info_data.userid and fieldid=1';
+
 					break;
 				default:
 					break;
 			}
-
-				
 
 			// Find way to detect the value type that matches the values in a
 			// column

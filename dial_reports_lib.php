@@ -91,7 +91,11 @@ function simpleHtmlTable( $data, $headers )
 				$datum = date($date_format, $field);
 				$row[] = $datum;
 				echo "<td>".$datum."</td>";
-			} elseif( is_string($field) ){
+			} elseif( $key == 'position' ){
+				echo "<td> user position </td>";
+			
+			
+			}elseif( is_string($field) ){
 				$row[] = $field;
 				echo "<td>".$field."</td>";
 			}elseif ( is_float($field) ){
@@ -117,6 +121,8 @@ function get_columns( $table ){
 
 	if( empty($table) ){
 		echo "get_columns(): Table not valid. ";
+		return null;
+	}elseif( $table == 'user_info_data'){
 		return null;
 	}
 	$table_columns = array($table => array());

@@ -11,14 +11,18 @@ table, th, td {
     padding:5px;
 }
 
-table {
-	margin-left:15%;
-	margin-right:15%;
-    width:75%;
-}
-
 .banner{
 	background-color: rgba(0,0,0,0);
+}
+
+.container-fluid{
+	margin:0;
+	padding-right:5px;
+	padding-left:5px;
+}
+
+#page #page-content #region-main, #page #page-content div[role=main]{
+	border:none;
 }
 
 .banner-image{
